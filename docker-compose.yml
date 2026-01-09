@@ -1,23 +1,52 @@
 version: '3.8'
 
 services:
+  # 1. Baza (Sizda bor, lekin parolni .env ga moslaymiz)
   postgres:
     image: postgres:15
     container_name: postgres-db
     environment:
       POSTGRES_PASSWORD: otash2002
+      POSTGRES_DB: payme_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
 
+  # 2. RabbitMQ (Sizda bor)
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
+
+  # 3. Order Service qo'shamiz
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    depends_on:
+      - postgres
+      - rabbitmq
+    environment:
+      DATABASE_URL: "postgresql://postgres:otash2002@postgres:5432/payme_db?schema=public"
+      RABBITMQ_URL: "amqp://rabbitmq:5672"
+    ports:
+      - "3000:3000"
+
+  # 4. Payment Service qo'shamiz
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    depends_on:
+      - postgres
+      - rabbitmq
+    environment:
+      DATABASE_URL: "postgresql://postgres:otash2002@postgres:5432/payme_db?schema=public"
+      RABBITMQ_URL: "amqp://rabbitmq:5672"
+    ports:
+      - "3001:3000" # Postman uchun 3001 portni ochamiz
 
 volumes:
   postgres_data:

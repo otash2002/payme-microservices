@@ -9,8 +9,12 @@ datasource db {
 
 model Payment {
   id        Int      @id @default(autoincrement())
-  orderId   Int
-  amount    Float
-  status    String   @default("PENDING")
+  orderId   Int      @unique
+  amount    Int
+  status    String
+  state     Int      @default(0)   // <--- Shu borligini tekshiring
+  paymeId   String?  @unique       // <--- Shu borligini tekshiring
+  paymeTime BigInt?                // <--- Shu borligini tekshiring
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
